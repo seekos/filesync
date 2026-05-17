@@ -1,0 +1,56 @@
+{{define "form.html"}}
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FileSync</title>
+  {{template "style" .}}
+</head>
+<body>
+  <header>FileSync</header>
+  <main>
+    <section class="toolbar">
+      <div>
+        <h1>{{.Title}}</h1>
+        <p>每个任务对应一个本地目录；可选择同步到 HTTP 接收端，或同步到本机另一绝对路径（不经过网络）。</p>
+      </div>
+      <a class="button" href="/">返回</a>
+    </section>
+
+    <form class="form" method="post" action="{{if eq .Mode "create"}}/tasks/create{{else}}/tasks/{{.Task.ID}}/update{{end}}">
+      <fieldset class="radio-group">
+        <legend>同步方式</legend>
+        <label class="radio-option">
+          <input type="radio" name="task_type" value="receiver" {{if or (eq .Task.Type "receiver") (eq .Task.Type "")}}checked{{end}}>
+          <span>
+            <strong>HTTP 接收端</strong>
+            <small>同步到另一台服务器的接收端存储目录</small>
+          </span>
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="task_type" value="local" {{if eq .Task.Type "local"}}checked{{end}}>
+          <span>
+            <strong>本机目录</strong>
+            <small>同步到本机另一绝对路径，不经过网络</small>
+          </span>
+        </label>
+      </fieldset>
+      <label>任务名称<input required name="name" value="{{.Task.Name}}" placeholder="例如：应用数据备份"></label>
+      <label>本地目录<input required name="local_path" value="{{.Task.LocalPath}}" placeholder="/data/app 或 Windows 盘符路径"></label>
+      <label>接收端地址<input name="receiver_url" value="{{.Task.ReceiverURL}}" placeholder="http://10.0.0.8:1987（本机目录模式可留空）"></label>
+      <label>接收端存储目录 / 本机目标目录<input required name="destination_path" value="{{.Task.DestinationPath}}" placeholder="server-a/app 或 E:/backup/app（统一使用 /）"></label>
+      <label>认证令牌<input name="auth_token" value="{{.Task.AuthToken}}" placeholder="与接收端 -token 保持一致"></label>
+      <label>排除规则<textarea name="excludes" rows="5" placeholder="每行一个，例如 *.tmp">{{join .Task.Excludes "\n"}}</textarea></label>
+      <div class="grid">
+        <label>同步间隔秒数<input name="interval_seconds" type="number" min="30" value="{{.Task.IntervalSeconds}}"></label>
+        <label>上传并发数<input name="upload_workers" type="number" min="1" max="128" value="{{.Task.UploadWorkers}}"></label>
+        <label class="check"><input type="checkbox" name="delete_extraneous" {{if .Task.DeleteExtraneous}}checked{{end}}> 删除远端多余文件</label>
+        <label class="check"><input type="checkbox" name="enabled" {{if .Task.Enabled}}checked{{end}}> 启用定时同步</label>
+      </div>
+      <button class="primary" type="submit">保存</button>
+    </form>
+  </main>
+</body>
+</html>
+{{end}}

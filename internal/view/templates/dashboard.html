@@ -1,0 +1,117 @@
+{{define "dashboard.html"}}
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {{if .HasRunning}}<meta http-equiv="refresh" content="3">{{end}}
+  <title>FileSync</title>
+  {{template "style" .}}
+</head>
+<body>
+  <header>
+    <div class="brand">FileSync</div>
+    <div class="header-sub">发送端控制台</div>
+  </header>
+  <main>
+    <section class="toolbar">
+      <div>
+        <h1>文件同步任务</h1>
+        <p>管理本机目录同步，实时查看上传速度、预计时间和当前文件。</p>
+      </div>
+      <a class="button primary" href="/tasks/new">新增目录</a>
+    </section>
+
+    <section class="table-wrap">
+      <table>
+        <colgroup>
+          <col class="col-name">
+          <col class="col-paths">
+          <col class="col-online">
+          <col class="col-interval">
+          <col class="col-status">
+          <col class="col-time">
+          <col class="col-actions">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>名称</th>
+            <th>同步路径</th>
+            <th>在线状态</th>
+            <th>间隔</th>
+            <th>状态</th>
+            <th>上次成功</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .Tasks}}
+          <tr>
+            <td><strong>{{.Name}}</strong></td>
+            <td class="route-cell">
+              <div class="route-line">
+                <span class="route-label">本地</span>
+                <code class="route-path" title="{{.LocalPath}}">{{.LocalPath}}</code>
+                <span class="route-arrow">→</span>
+                <span class="route-label">目标</span>
+                <code class="route-path" title="{{.RemoteAddr}}">{{.RemoteAddr}}</code>
+              </div>
+            </td>
+            <td><span class="receiver {{.ReceiverStatus}}">{{.ReceiverStatus}}</span></td>
+            <td>{{.IntervalSeconds}} 秒</td>
+            <td class="status-cell">
+              <div class="state-row">
+                <span class="status {{.Status}}">{{.Status}}</span>
+                {{if .CurrentStep}}<span class="progress-step">{{.CurrentStep}}</span>{{end}}
+              </div>
+              {{if .NeededBytes}}
+              <div class="progress-bar wide"><span style="width: {{percent64 .UploadedBytes .NeededBytes}}%"></span></div>
+              <div class="metrics">
+                <span>{{bytes .UploadedBytes}} / {{bytes .NeededBytes}}</span>
+                <span>{{speed .UploadSpeedBps}}</span>
+                <span>剩余 {{eta .ETASeconds}}</span>
+              </div>
+              {{else if .NeededFiles}}
+              <div class="progress-bar wide"><span style="width: {{percent .UploadedFiles .NeededFiles}}%"></span></div>
+              {{end}}
+              <div class="file-counts">
+                {{if .NeededFiles}}<span>文件 {{.UploadedFiles}} / {{.NeededFiles}}</span>{{end}}
+                {{if .ScannedFiles}}<span>扫描 {{.ScannedFiles}}</span>{{end}}
+              </div>
+              {{if .CurrentFile}}
+              <div class="current-file" title="{{.CurrentFile}}">
+                <span>当前</span>
+                <code>{{.CurrentFile}}</code>
+              </div>
+              {{end}}
+              {{if .CurrentFileSize}}
+              <div class="file-mini">
+                <span>{{bytes .CurrentFileBytes}} / {{bytes .CurrentFileSize}}</span>
+                <div class="progress-bar mini"><span style="width: {{percent64 .CurrentFileBytes .CurrentFileSize}}%"></span></div>
+              </div>
+              {{end}}
+              {{if .LastProgressAt}}<div class="muted">更新 {{time .LastProgressAt}}</div>{{end}}
+              {{if .LastError}}<div class="error">{{.LastError}}</div>{{end}}
+            </td>
+            <td>{{time .LastSuccessAt}}</td>
+            <td class="actions">
+              {{if eq .Status "running"}}
+              <form method="post" action="/tasks/{{.ID}}/stop"><button class="danger">停止</button></form>
+              {{else}}
+              <form method="post" action="/tasks/{{.ID}}/run"><button>立即同步</button></form>
+              {{end}}
+              <form method="post" action="/tasks/{{.ID}}/toggle"><button>{{if .Enabled}}停用{{else}}启用{{end}}</button></form>
+              <a class="button" href="/tasks/{{.ID}}/edit">编辑</a>
+              <form method="post" action="/tasks/{{.ID}}/delete" onsubmit="return confirm('确定删除该任务？')"><button class="danger">删除</button></form>
+            </td>
+          </tr>
+          {{else}}
+          <tr><td colspan="7" class="empty">还没有同步目录，先新增一个。</td></tr>
+          {{end}}
+        </tbody>
+      </table>
+    </section>
+  </main>
+</body>
+</html>
+{{end}}

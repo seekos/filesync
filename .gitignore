@@ -1,0 +1,15 @@
+# 自动生成的.gitignore文件
+*.log
+node_modules/
+dist/
+build/
+.DS_Store
+.env
+.idea
+tmp/
+*.exe
+uploads/
+logs/
+*.toml
+config.toml
+.cache
